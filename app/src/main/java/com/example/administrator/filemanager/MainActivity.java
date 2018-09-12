@@ -45,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
             lists.add(preFile);
         }
         File[] files = file.listFiles();
+        if(files  != null)
         for(File f : files){
             FileData fileData = new FileData(f.getName(),f.getAbsolutePath());
             lists.add(fileData);
