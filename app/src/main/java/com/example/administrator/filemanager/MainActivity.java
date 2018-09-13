@@ -2,7 +2,9 @@ package com.example.administrator.filemanager;
 
 import android.Manifest;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -27,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
     private RecycleFileAdapter recycleFileAdapter;
     FileData currentFileData;
     File currentFile;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -84,16 +87,16 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onItemClick(View view, int position) {
             currentFileData = lists.get(position);
-            File currentFile = new File(currentFileData.getPath());
+            currentFile = new File(currentFileData.getPath());
             if (currentFile.isDirectory()) {
                 showData(currentFile.getAbsolutePath());
             } else {
-//                openFile(file.getPath());
+                openFile(currentFile.getPath());
             }
         }
     }
 
-//    private class MyItemClickListener implements AdapterView.OnItemClickListener {
+    //    private class MyItemClickListener implements AdapterView.OnItemClickListener {
 //
 //        @Override
 //        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -133,6 +136,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
+
     public void requestPower() {
         //判断是否已经赋予权限
         if (ContextCompat.checkSelfPermission(this,
@@ -146,6 +150,28 @@ public class MainActivity extends AppCompatActivity {
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,}, 1);
             }
+
+
         }
+
     }
+
+    public void openFile(String path) {
+        if (path == null)
+            return;
+        Intent intent = new Intent();
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setAction(Intent.ACTION_VIEW);
+        String fileType = "";
+
+        for (int i = 0; i < FormatData.MATCH_ARRAY.length; i++) {
+            if(path.contains(FormatData.MATCH_ARRAY[i][0])){
+                fileType = FormatData.MATCH_ARRAY[i][1];
+                break;
+            }
+        }
+        intent.setDataAndType(Uri.fromFile(new File(path)), fileType);
+        startActivity(intent);
+    }
+
 }
