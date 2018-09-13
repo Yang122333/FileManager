@@ -59,6 +59,13 @@ public class RecycleFileAdapter extends RecyclerView.Adapter<MyViewHolder> {
                 mOnItenClickListener.onItemClick(v,position);
             }
         });
+        holder.mLinearLayout.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                mOnItemLongClickListener.onItemLongClick(v,position);
+                return true;
+            }
+        });
     }
 
 

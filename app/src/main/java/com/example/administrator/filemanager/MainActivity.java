@@ -13,6 +13,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import android.widget.Toast;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -79,9 +80,36 @@ public class MainActivity extends AppCompatActivity {
         recycleFileAdapter = new RecycleFileAdapter(lists, this);
         recyclerView.setAdapter(recycleFileAdapter);
         recycleFileAdapter.setOnItemClickListener(new MyItemClickListener());
+        recycleFileAdapter.setOnItemLongClickListener(new MyItemLongClickListener());
+
 //        listView.setOnItemClickListener(new MyItemClickListener());
     }
+private class MyItemLongClickListener implements OnRecyclerViewItemLongClickListener{
 
+    @Override
+    public void onItemLongClick(View view, final int position) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setMessage("是否删除文件")
+                .setNegativeButton("取消",null)
+                .setPositiveButton("确认", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        currentFileData = lists.get(position);
+                        currentFile = new File(currentFileData.getPath());
+                        if(currentFile.exists()&&currentFile.canWrite()){
+                            currentFile.delete();
+                            String preFilePath = currentFile.getParent();
+                            showData(preFilePath);
+                        }else{
+                            Toast.makeText(MainActivity.this, "无法对该文件进行操作", Toast.LENGTH_SHORT).show();
+                        }
+
+                    }
+                });
+        builder.show();
+
+    }
+}
     private class MyItemClickListener implements OnRecyclerViewItemClickListener {
 
         @Override
