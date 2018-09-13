@@ -15,8 +15,9 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     private ListView listView;
-    ArrayList<FileData> lists;
-    FileAdapter fileAdapter;
+    private ArrayList<FileData> lists;
+    private FileAdapter fileAdapter;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,8 +34,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void showData(String path) {
         lists = new ArrayList<>();
+        int directoryCount = 0;
         File file = new File(path);
+
         if (!"/".equals(path)) {
+            directoryCount = 2;//为两个返回空下位置
             FileData rootFile = new FileData();
             rootFile.setName("return to root");
             rootFile.setPath("/");
@@ -45,17 +49,23 @@ public class MainActivity extends AppCompatActivity {
             lists.add(preFile);
         }
         File[] files = file.listFiles();
-        if(files  != null)
-        for(File f : files){
-            FileData fileData = new FileData(f.getName(),f.getAbsolutePath());
-            lists.add(fileData);
-        }
+        if (files != null)
+            for (File f : files) {
+                FileData fileData = new FileData(f.getName(), f.getAbsolutePath());
+
+                if (f.isDirectory()) {
+                    lists.add(directoryCount, fileData);
+                    directoryCount++;
+                } else {
+                    lists.add(fileData);
+                }
+            }
         fileAdapter = new FileAdapter(this, R.layout.fileitem, lists);
         listView.setAdapter(fileAdapter);
         listView.setOnItemClickListener(new MyItemClickListener());
     }
 
-  private  class MyItemClickListener implements AdapterView.OnItemClickListener {
+    private class MyItemClickListener implements AdapterView.OnItemClickListener {
 
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
