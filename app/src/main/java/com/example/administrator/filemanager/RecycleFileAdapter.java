@@ -13,7 +13,15 @@ import android.widget.TextView;
 import java.io.File;
 import java.util.ArrayList;
 
-public class RecycleFileAdapter extends RecyclerView.Adapter<MyViewHolder> {
+public class RecycleFileAdapter extends RecyclerView.Adapter<RecycleFileAdapter.MyViewHolder> {
+    interface OnRecyclerViewItemClickListener {
+        void onItemClick(View view, int position);
+    }
+
+    interface OnRecyclerViewItemLongClickListener {
+        void onItemLongClick(View view, int position);
+    }
+
     private ArrayList<FileData> mFileDataList;
     private Context mContext;
     private OnRecyclerViewItemClickListener mOnItenClickListener = null;
@@ -24,18 +32,19 @@ public class RecycleFileAdapter extends RecyclerView.Adapter<MyViewHolder> {
         mContext = context;
     }
 
-    public void setOnItemClickListener(OnRecyclerViewItemClickListener listener){
+    public void setOnItemClickListener(OnRecyclerViewItemClickListener listener) {
         this.mOnItenClickListener = listener;
     }
 
-    public void setOnItemLongClickListener(OnRecyclerViewItemLongClickListener listener){
+    public void setOnItemLongClickListener(OnRecyclerViewItemLongClickListener listener) {
         this.mOnItemLongClickListener = listener;
     }
+
     @NonNull
     @Override
     public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        MyViewHolder holder = new MyViewHolder(LayoutInflater.from(mContext).inflate(R.layout.fileitem,parent,false));
-
+        MyViewHolder holder = new MyViewHolder(LayoutInflater.from(mContext)
+                .inflate(R.layout.fileitem, parent, false));
         return holder;
     }
 
@@ -56,14 +65,14 @@ public class RecycleFileAdapter extends RecyclerView.Adapter<MyViewHolder> {
         holder.mLinearLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mOnItenClickListener.onItemClick(v,position);
+                mOnItenClickListener.onItemClick(v, position);
             }
         });
         holder.mLinearLayout.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                mOnItemLongClickListener.onItemLongClick(v,position);
-                return true;
+                mOnItemLongClickListener.onItemLongClick(v, position);
+                return true;//消费事件
             }
         });
     }
@@ -73,27 +82,21 @@ public class RecycleFileAdapter extends RecyclerView.Adapter<MyViewHolder> {
     public int getItemCount() {
         return mFileDataList.size();
     }
-}
 
-class MyViewHolder extends RecyclerView.ViewHolder {
-    ImageView mImageView;
-    TextView mTextView;
-    LinearLayout mLinearLayout;
+    class MyViewHolder extends RecyclerView.ViewHolder {
+        ImageView mImageView;
+        TextView mTextView;
+        LinearLayout mLinearLayout;
 
-    public MyViewHolder(View itemView) {
-        super(itemView);
-        mImageView = (ImageView) itemView.findViewById(R.id.file_image);
-        mTextView = (TextView) itemView.findViewById(R.id.file_name);
-        mLinearLayout = (LinearLayout) itemView.findViewById(R.id.file_linearlayout);
+        public MyViewHolder(View itemView) {
+            super(itemView);
+            mImageView = (ImageView) itemView.findViewById(R.id.file_image);
+            mTextView = (TextView) itemView.findViewById(R.id.file_name);
+            mLinearLayout = (LinearLayout) itemView.findViewById(R.id.file_linearlayout);
+        }
+
     }
 
 
-
-}
-interface OnRecyclerViewItemClickListener {
-    void onItemClick(View view,int position);
 }
 
- interface OnRecyclerViewItemLongClickListener {
-    void onItemLongClick(View view,int position);
-}

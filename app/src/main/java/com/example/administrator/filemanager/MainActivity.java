@@ -21,15 +21,13 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity {
     public static final int ROOT_FILE = 0;
     public static final int PRE_FILE = 1;
-    public static final int PRE_NUMBER = 2;
+    public static final int PRE_COUNT = 2;
 
-    //    private ListView listView;
     private ArrayList<FileData> lists;
-    //    private FileAdapter fileAdapter;
     private RecyclerView recyclerView;
     private RecycleFileAdapter recycleFileAdapter;
-    FileData currentFileData;
-    File currentFile;
+    private FileData currentFileData;
+    private File currentFile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,7 +35,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         recyclerView = (RecyclerView) findViewById(R.id.recycle_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-//        listView = (ListView) findViewById(R.id.fileList);
         init();
     }
 
@@ -50,9 +47,8 @@ public class MainActivity extends AppCompatActivity {
         lists = new ArrayList<>();
         int directoryCount = 0;
         currentFile = new File(path);
-
         if (!"/".equals(path)) {
-            directoryCount = 2;//为两个返回空下位置
+            directoryCount = PRE_COUNT;//为两个返回空下位置
             FileData rootFile = new FileData();
             rootFile.setName("return to root");
             rootFile.setPath(File.separator);
@@ -66,7 +62,6 @@ public class MainActivity extends AppCompatActivity {
         if (files != null)
             for (File f : files) {
                 FileData fileData = new FileData(f.getName(), f.getAbsolutePath());
-
                 if (f.isDirectory()) {
                     lists.add(directoryCount, fileData);
                     directoryCount++;
@@ -74,44 +69,39 @@ public class MainActivity extends AppCompatActivity {
                     lists.add(fileData);
                 }
             }
-//        fileAdapter = new FileAdapter(this, R.layout.fileitem, lists);
-//        listView.setAdapter(fileAdapter);
-
         recycleFileAdapter = new RecycleFileAdapter(lists, this);
         recyclerView.setAdapter(recycleFileAdapter);
         recycleFileAdapter.setOnItemClickListener(new MyItemClickListener());
         recycleFileAdapter.setOnItemLongClickListener(new MyItemLongClickListener());
-
-//        listView.setOnItemClickListener(new MyItemClickListener());
     }
-private class MyItemLongClickListener implements OnRecyclerViewItemLongClickListener{
 
-    @Override
-    public void onItemLongClick(View view, final int position) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-        builder.setMessage("是否删除文件")
-                .setNegativeButton("取消",null)
-                .setPositiveButton("确认", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        currentFileData = lists.get(position);
-                        currentFile = new File(currentFileData.getPath());
-                        if(currentFile.exists()&&currentFile.canWrite()){
-                            currentFile.delete();
-                            String preFilePath = currentFile.getParent();
-                            showData(preFilePath);
-                        }else{
-                            Toast.makeText(MainActivity.this, "无法对该文件进行操作", Toast.LENGTH_SHORT).show();
+    private class MyItemLongClickListener implements RecycleFileAdapter.OnRecyclerViewItemLongClickListener {
+
+        @Override
+        public void onItemLongClick(View view, final int position) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            builder.setMessage("是否删除文件")
+                    .setNegativeButton("取消", null)
+                    .setPositiveButton("确认", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            currentFileData = lists.get(position);
+                            currentFile = new File(currentFileData.getPath());
+                            if (currentFile.exists() && currentFile.canWrite()) {
+                                currentFile.delete();
+                                String preFilePath = currentFile.getParent();
+                                showData(preFilePath);
+                            } else {
+                                Toast.makeText(MainActivity.this, "无法对该文件进行操作", Toast.LENGTH_SHORT).show();
+                            }
                         }
+                    });
+            builder.show();
 
-                    }
-                });
-        builder.show();
-
+        }
     }
-}
-    private class MyItemClickListener implements OnRecyclerViewItemClickListener {
 
+    private class MyItemClickListener implements RecycleFileAdapter.OnRecyclerViewItemClickListener {
         @Override
         public void onItemClick(View view, int position) {
             currentFileData = lists.get(position);
@@ -124,29 +114,14 @@ private class MyItemLongClickListener implements OnRecyclerViewItemLongClickList
         }
     }
 
-    //    private class MyItemClickListener implements AdapterView.OnItemClickListener {
-//
-//        @Override
-//        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//            FileData currentFileData = lists.get(position);
-//            File file = new File(currentFileData.getPath());
-//            if (file.isDirectory()) {
-//                showData(file.getAbsolutePath());
-//            } else {
-////                openFile(file.getPath());
-//            }
-//        }
-//    }
     @Override
     public void onBackPressed() {
-
-//        System.out.println("按下了back键   onBackPressed()");
         FileData fileData = null;
-        if (lists.size() >= PRE_NUMBER) {
+        if (lists.size() >= PRE_COUNT) {
             fileData = lists.get(PRE_FILE);  // 获取父文件夹信息与路径
         }
         if (fileData != null) {
-            //如果父亲节点是根目录则提示退出
+            //如果当前节点是根目录，弹出对话框
             if (File.separator.equals(currentFile.getPath())) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setMessage("是否退出")
@@ -162,7 +137,24 @@ private class MyItemLongClickListener implements OnRecyclerViewItemLongClickList
                 showData(fileData.getPath());
             }
         }
+    }
 
+    public void openFile(String path) {
+        if (path == null)
+            return;
+        Intent intent = new Intent();
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setAction(Intent.ACTION_VIEW);
+        String fileType = "";
+
+        for (int i = 0; i < FormatData.MATCH_ARRAY.length; i++) {
+            if (path.contains(FormatData.MATCH_ARRAY[i][0])) {
+                fileType = FormatData.MATCH_ARRAY[i][1];
+                break;
+            }
+        }
+        intent.setDataAndType(Uri.fromFile(new File(path)), fileType);
+        startActivity(intent);
     }
 
     public void requestPower() {
@@ -178,28 +170,8 @@ private class MyItemLongClickListener implements OnRecyclerViewItemLongClickList
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,}, 1);
             }
-
-
         }
-
     }
 
-    public void openFile(String path) {
-        if (path == null)
-            return;
-        Intent intent = new Intent();
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.setAction(Intent.ACTION_VIEW);
-        String fileType = "";
-
-        for (int i = 0; i < FormatData.MATCH_ARRAY.length; i++) {
-            if(path.contains(FormatData.MATCH_ARRAY[i][0])){
-                fileType = FormatData.MATCH_ARRAY[i][1];
-                break;
-            }
-        }
-        intent.setDataAndType(Uri.fromFile(new File(path)), fileType);
-        startActivity(intent);
-    }
 
 }

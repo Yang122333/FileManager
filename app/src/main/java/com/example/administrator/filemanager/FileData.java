@@ -6,10 +6,12 @@ public class FileData {
 
     public FileData() {
     }
-public FileData(String name ,String path){
+
+    public FileData(String name, String path) {
         this.name = name;
         this.path = path;
-}
+    }
+
     public void setName(String name) {
         this.name = name;
     }
