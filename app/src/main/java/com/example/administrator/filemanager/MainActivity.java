@@ -6,24 +6,27 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ListView;
 
 import java.io.File;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
-    private ListView listView;
+    //    private ListView listView;
     private ArrayList<FileData> lists;
-    private FileAdapter fileAdapter;
-
+    //    private FileAdapter fileAdapter;
+    private RecyclerView recyclerView;
+    private RecycleFileAdapter recycleFileAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        listView = (ListView) findViewById(R.id.fileList);
+        recyclerView = (RecyclerView) findViewById(R.id.recycle_view);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+//        listView = (ListView) findViewById(R.id.fileList);
         init();
     }
 
@@ -60,15 +63,19 @@ public class MainActivity extends AppCompatActivity {
                     lists.add(fileData);
                 }
             }
-        fileAdapter = new FileAdapter(this, R.layout.fileitem, lists);
-        listView.setAdapter(fileAdapter);
-        listView.setOnItemClickListener(new MyItemClickListener());
+//        fileAdapter = new FileAdapter(this, R.layout.fileitem, lists);
+//        listView.setAdapter(fileAdapter);
+
+        recycleFileAdapter = new RecycleFileAdapter(lists, this);
+        recyclerView.setAdapter(recycleFileAdapter);
+        recycleFileAdapter.setOnItemClickListener(new MyItemClickListener());
+//        listView.setOnItemClickListener(new MyItemClickListener());
     }
 
-    private class MyItemClickListener implements AdapterView.OnItemClickListener {
+    private class MyItemClickListener implements OnRecyclerViewItemClickListener {
 
         @Override
-        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        public void onItemClick(View view, int position) {
             FileData currentFileData = lists.get(position);
             File file = new File(currentFileData.getPath());
             if (file.isDirectory()) {
@@ -78,6 +85,20 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+//    private class MyItemClickListener implements AdapterView.OnItemClickListener {
+//
+//        @Override
+//        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+//            FileData currentFileData = lists.get(position);
+//            File file = new File(currentFileData.getPath());
+//            if (file.isDirectory()) {
+//                showData(file.getAbsolutePath());
+//            } else {
+////                openFile(file.getPath());
+//            }
+//        }
+//    }
 
     public void requestPower() {
         //判断是否已经赋予权限
