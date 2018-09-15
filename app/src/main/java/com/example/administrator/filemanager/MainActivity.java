@@ -66,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         initView();
         initData();
+        initListener();
     }
 
     private void initView() {
@@ -94,18 +95,60 @@ public class MainActivity extends AppCompatActivity {
         showData(File.separator);//root
     }
 
+    private void initListener() {
+//        copyFileBtn.setOnClickListener();
+//        cutFileBtn.setOnClickListener();
+        deleteFileBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setMessage("是否删除？")
+                        .setPositiveButton("确认", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                delete();
+                            }
+                        })
+                        .setNegativeButton("取消", null);
+                builder.show();
+            }
+        });
+        choseAll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                chose(true);
+                recycleFileAdapter.notifyDataSetChanged();
+                choseAll.setVisibility(View.GONE);
+                cancelChoseAll.setVisibility(View.VISIBLE);
+            }
+        });
+        cancelChoseAll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                chose(false);
+                recycleFileAdapter.notifyDataSetChanged();
+                choseAll.setVisibility(View.VISIBLE);
+                cancelChoseAll.setVisibility(View.GONE);
+            }
+        });
+    }
+
     @Override
     public void onBackPressed() {
         if (isLongClick.get(MKEY)) {
-            operateFileLinearlayout.setVisibility(View.GONE);
-            copyAndCutRelativeLayout.setVisibility(View.GONE);
-            uiLinearLayout.setVisibility(View.VISIBLE);
-            isLongClick.put(MKEY, false);
-            selects.clear();
-            showData(currentFile.getAbsolutePath());
+            cancel();
         } else {
             turnToBack();
         }
+    }
+
+    private void cancel() {
+        operateFileLinearlayout.setVisibility(View.GONE);
+        copyAndCutRelativeLayout.setVisibility(View.GONE);
+        uiLinearLayout.setVisibility(View.VISIBLE);
+        isLongClick.put(MKEY, false);
+        selects.clear();
+        showData(currentFile.getAbsolutePath());
     }
 
     /**
@@ -116,7 +159,6 @@ public class MainActivity extends AppCompatActivity {
     private void showData(String path) {
         lists = new ArrayList<>();
         int directoryIndex = 0;
-
         currentFile = new File(path);
         File[] files = currentFile.listFiles();
         if (files != null)
@@ -126,15 +168,15 @@ public class MainActivity extends AppCompatActivity {
                     int directoryCount = 0;
                     int fileCount = 0;
                     File[] countFile = f.listFiles();
-                    if(countFile != null)
-                    for(File f1: countFile){
-                        if(f1.isDirectory()){
-                            directoryCount ++;
+                    if (countFile != null)
+                        for (File f1 : countFile) {
+                            if (f1.isDirectory()) {
+                                directoryCount++;
+                            }
+                            if (f1.isFile()) {
+                                fileCount++;
+                            }
                         }
-                        if(f1.isFile()){
-                            fileCount ++;
-                        }
-                    }
                     fileData.setFileCount(fileCount);
                     fileData.setDirectoryCount(directoryCount);
                     lists.add(directoryIndex, fileData);
@@ -150,9 +192,23 @@ public class MainActivity extends AppCompatActivity {
         recycleFileAdapter.setOnItemLongClickListener(new MyItemLongClickListener());
     }
 
+    private int getFileCount(File file) {
+        int count = 0;
+        if (file != null) {
+            File[] files = file.listFiles();
+            if (files != null)
+                count = files.length;
+        }
+        return count;
+    }
+
+    private void chose(boolean iscChosed) {
+        for (int i = 0; i < getFileCount(currentFile); i++) {
+            selects.put(i, iscChosed);
+        }
+    }
 
     private class MyItemLongClickListener implements RecycleFileAdapter.OnRecyclerViewItemLongClickListener {
-
         @Override
         public void onItemLongClick(View view, final int position) {
             isLongClick.put(MKEY, true);
@@ -160,18 +216,6 @@ public class MainActivity extends AppCompatActivity {
             operateFileLinearlayout.setVisibility(View.VISIBLE);
             selects.put(position, true);
             recycleFileAdapter.notifyDataSetChanged();
-        }
-    }
-
-    public void delete(int position) {
-        currentFileData = lists.get(position);
-        currentFile = new File(currentFileData.getPath());
-        if (currentFile.exists() && currentFile.canWrite()) {
-            currentFile.delete();
-            String preFilePath = currentFile.getParent();
-            showData(preFilePath);
-        } else {
-            Toast.makeText(this, "无法对该文件进行操作", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -196,6 +240,70 @@ public class MainActivity extends AppCompatActivity {
                 }
                 recycleFileAdapter.notifyDataSetChanged();
             }
+        }
+    }
+
+    public boolean delete() {
+        boolean flag = false;
+        for (Map.Entry<Integer, Boolean> entry : selects.entrySet()) {
+            currentFileData = lists.get(entry.getKey());
+            currentFile = new File(currentFileData.getPath());
+
+            if (currentFile.exists() && currentFile.canWrite() && entry.getValue()) {
+                currentFile.delete();
+                if (currentFile.isDirectory()) {
+                    flag = deleteDirectory(currentFile);
+                } else if (currentFile.isFile()){
+                    flag = deleteFile(currentFile);
+                }
+            } else {
+                flag = false;
+            }
+        }
+        if (!flag) {
+            Toast.makeText(this, "无法对该文件进行操作", Toast.LENGTH_SHORT).show();
+            currentFile = currentFile.getParentFile();
+        } else {
+            selects.clear();
+            String preFilePath = currentFile.getParent();
+            showData(preFilePath);
+        }
+        return flag;
+    }
+
+    private boolean deleteFile(File file) {
+        boolean flag = false;
+        if (file.isFile() && file.exists()) {
+            file.delete();
+            flag = true;
+        }
+        return flag;
+
+    }
+
+    private boolean deleteDirectory(File dirFile) {
+        boolean flag = false;
+        if (!dirFile.exists() || !dirFile.isDirectory()) {
+            return false;
+        }
+        File[] files = dirFile.listFiles();
+        for (int i = 0; i < files.length; i++) {
+            //删除子文件
+            if (files[i].isFile()) {
+                flag = deleteFile(files[i]);
+                if (!flag) break;
+            } //删除子目录
+            else {
+                flag = deleteDirectory(files[i]);
+                if (!flag) break;
+            }
+        }
+        if (!flag) return false;
+        //删除当前目录
+        if (dirFile.delete()) {
+            return true;
+        } else {
+            return false;
         }
     }
 
