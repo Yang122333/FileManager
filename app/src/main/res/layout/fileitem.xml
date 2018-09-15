@@ -1,25 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/file_relativelayout"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:id="@+id/file_linearlayout">
+    android:layout_height="wrap_content">
+
     <ImageView
         android:id="@+id/file_image"
+        android:layout_width="60dp"
+        android:layout_height="50dp"
+        android:layout_alignParentLeft="true"
         android:scaleType="fitXY"
-        android:src="@drawable/directory"
-        android:layout_width="30dp"
-        android:layout_height="25dp" />
-<TextView
-    android:id="@+id/file_name"
-    android:text="hello"
-    android:textSize="20dp"
-    android:layout_weight="1"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content" />
+        android:src="@drawable/directory" />
+
+    <TextView
+        android:id="@+id/file_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@+id/file_image"
+        android:layout_weight="1"
+        android:paddingLeft="20dp"
+        android:text="hello"
+        android:textSize="20dp" />
+
+    <TextView
+        android:id="@+id/file_des"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/file_name"
+        android:layout_toRightOf="@+id/file_image"
+        android:paddingLeft="20dp"
+        android:text="dsfafasdf sfadf sdfsfafasdfs"
+        android:textSize="10dp" />
+
     <CheckBox
         android:id="@+id/select_file"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
         android:visibility="gone" />
-</LinearLayout>
+</RelativeLayout>

@@ -13,114 +13,195 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import android.view.Window;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
     public static final int ROOT_FILE = 0;
     public static final int PRE_FILE = 1;
     public static final int PRE_COUNT = 2;
+    public static final String RETURN_TO_BACK = "return to parent";
+    public static final String RETURN_TO_ROOT = "return to root";
 
-    private ArrayList<FileData> lists;
+    private static final String MKEY = "isLongClick";
+
     private RecyclerView recyclerView;
+    private LinearLayout uiLinearLayout;
+    private Button createFileBtn;
+    private Button searchFileBtn;
+
+    private LinearLayout operateFileLinearlayout;
+    private Button copyFileBtn;
+    private Button cutFileBtn;
+    private Button deleteFileBtn;
+    private Button choseAll;
+    private Button cancelChoseAll;
+
+    private RelativeLayout copyAndCutRelativeLayout;
+    private Button newdirectory;
+    private Button cancelMoveFileBtn;
+    private Button pasteFileBtn;
+
     private RecycleFileAdapter recycleFileAdapter;
+    private ArrayList<FileData> lists;
     private FileData currentFileData;
     private File currentFile;
+    private Map<String, Boolean> isLongClick = new HashMap<>();
+
+    private Map<Integer, Boolean> selects = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_main);
-        recyclerView = (RecyclerView) findViewById(R.id.recycle_view);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        init();
+        initView();
+        initData();
     }
 
-    private void init() {
+    private void initView() {
+        recyclerView = (RecyclerView) findViewById(R.id.recycle_view);
+        uiLinearLayout = (LinearLayout) findViewById(R.id.ui_linearLayout);
+        createFileBtn = (Button) findViewById(R.id.create_directory);
+        searchFileBtn = (Button) findViewById(R.id.search_file);
+
+        operateFileLinearlayout = (LinearLayout) findViewById(R.id.operate_file_linearlayout);
+        copyFileBtn = (Button) findViewById(R.id.copy_file);
+        cutFileBtn = (Button) findViewById(R.id.cut_file);
+        deleteFileBtn = (Button) findViewById(R.id.delete_file);
+        choseAll = (Button) findViewById(R.id.chose_all);
+        cancelChoseAll = (Button) findViewById(R.id.cancel_chose_all);
+
+        copyAndCutRelativeLayout = (RelativeLayout) findViewById(R.id.copy_and_cut_file_relativelayout);
+        newdirectory = (Button) findViewById(R.id.create_directory);
+        cancelMoveFileBtn = (Button) findViewById(R.id.cancel);
+        pasteFileBtn = (Button) findViewById(R.id.paste_file);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+    }
+
+    private void initData() {
+        isLongClick.put(MKEY, false);
         requestPower();
         showData(File.separator);//root
     }
 
+    @Override
+    public void onBackPressed() {
+        if (isLongClick.get(MKEY)) {
+            operateFileLinearlayout.setVisibility(View.GONE);
+            copyAndCutRelativeLayout.setVisibility(View.GONE);
+            uiLinearLayout.setVisibility(View.VISIBLE);
+            isLongClick.put(MKEY, false);
+            selects.clear();
+            showData(currentFile.getAbsolutePath());
+        } else {
+            turnToBack();
+        }
+    }
+
+    /**
+     * 展示文件及文件夹
+     *
+     * @param path
+     */
     private void showData(String path) {
         lists = new ArrayList<>();
-        int directoryCount = 0;
+        int directoryIndex = 0;
+
         currentFile = new File(path);
-        if (!"/".equals(path)) {
-            directoryCount = PRE_COUNT;//为两个返回空下位置
-            FileData rootFile = new FileData();
-            rootFile.setName("return to root");
-            rootFile.setPath(File.separator);
-            lists.add(rootFile);
-            FileData preFile = new FileData();
-            preFile.setName("return to parent");
-            preFile.setPath(currentFile.getParent());
-            lists.add(preFile);
-        }
         File[] files = currentFile.listFiles();
         if (files != null)
             for (File f : files) {
                 FileData fileData = new FileData(f.getName(), f.getAbsolutePath());
                 if (f.isDirectory()) {
-                    lists.add(directoryCount, fileData);
-                    directoryCount++;
+                    int directoryCount = 0;
+                    int fileCount = 0;
+                    File[] countFile = f.listFiles();
+                    if(countFile != null)
+                    for(File f1: countFile){
+                        if(f1.isDirectory()){
+                            directoryCount ++;
+                        }
+                        if(f1.isFile()){
+                            fileCount ++;
+                        }
+                    }
+                    fileData.setFileCount(fileCount);
+                    fileData.setDirectoryCount(directoryCount);
+                    lists.add(directoryIndex, fileData);
+                    directoryIndex++;
                 } else {
+                    fileData.setLength(f.length());
                     lists.add(fileData);
                 }
             }
-        recycleFileAdapter = new RecycleFileAdapter(lists, this);
+        recycleFileAdapter = new RecycleFileAdapter(this, lists, isLongClick, selects);
         recyclerView.setAdapter(recycleFileAdapter);
         recycleFileAdapter.setOnItemClickListener(new MyItemClickListener());
         recycleFileAdapter.setOnItemLongClickListener(new MyItemLongClickListener());
     }
 
+
     private class MyItemLongClickListener implements RecycleFileAdapter.OnRecyclerViewItemLongClickListener {
 
         @Override
         public void onItemLongClick(View view, final int position) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-            builder.setMessage("是否删除文件")
-                    .setNegativeButton("取消", null)
-                    .setPositiveButton("确认", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            currentFileData = lists.get(position);
-                            currentFile = new File(currentFileData.getPath());
-                            if (currentFile.exists() && currentFile.canWrite()) {
-                                currentFile.delete();
-                                String preFilePath = currentFile.getParent();
-                                showData(preFilePath);
-                            } else {
-                                Toast.makeText(MainActivity.this, "无法对该文件进行操作", Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                    });
-            builder.show();
+            isLongClick.put(MKEY, true);
+            uiLinearLayout.setVisibility(View.GONE);
+            operateFileLinearlayout.setVisibility(View.VISIBLE);
+            selects.put(position, true);
+            recycleFileAdapter.notifyDataSetChanged();
+        }
+    }
 
+    public void delete(int position) {
+        currentFileData = lists.get(position);
+        currentFile = new File(currentFileData.getPath());
+        if (currentFile.exists() && currentFile.canWrite()) {
+            currentFile.delete();
+            String preFilePath = currentFile.getParent();
+            showData(preFilePath);
+        } else {
+            Toast.makeText(this, "无法对该文件进行操作", Toast.LENGTH_SHORT).show();
         }
     }
 
     private class MyItemClickListener implements RecycleFileAdapter.OnRecyclerViewItemClickListener {
         @Override
         public void onItemClick(View view, int position) {
-            currentFileData = lists.get(position);
-            currentFile = new File(currentFileData.getPath());
-            if (currentFile.isDirectory()) {
-                showData(currentFile.getAbsolutePath());
+            if (!isLongClick.get(MKEY)) {
+
+                currentFileData = lists.get(position);
+                currentFile = new File(currentFileData.getPath());
+                if (currentFile.isDirectory()) {
+                    showData(currentFile.getAbsolutePath());
+                } else {
+                    openFile(currentFile.getPath());
+                }
             } else {
-                openFile(currentFile.getPath());
+                CheckBox checkBox = (CheckBox) view.findViewById(R.id.select_file);
+                if (checkBox.isChecked())
+                    selects.put(position, false);
+                else {
+                    selects.put(position, true);
+                }
+                recycleFileAdapter.notifyDataSetChanged();
             }
         }
     }
 
-    @Override
-    public void onBackPressed() {
-        FileData fileData = null;
-        if (lists.size() >= PRE_COUNT) {
-            fileData = lists.get(PRE_FILE);  // 获取父文件夹信息与路径
-        }
-        if (fileData != null) {
+    public void turnToBack() {
+
+        if (currentFile.getPath() != File.separator) {
             //如果当前节点是根目录，弹出对话框
             if (File.separator.equals(currentFile.getPath())) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -134,11 +215,16 @@ public class MainActivity extends AppCompatActivity {
                         .setNegativeButton("取消", null);
                 builder.show();
             } else {
-                showData(fileData.getPath());
+                showData(currentFile.getParent());
             }
         }
     }
 
+    /**
+     * 打开文件
+     *
+     * @param path
+     */
     public void openFile(String path) {
         if (path == null)
             return;
@@ -172,6 +258,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+//   ViewGroup.LayoutParams
 
 
 }
