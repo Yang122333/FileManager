@@ -161,6 +161,7 @@ public class MainActivity extends AppCompatActivity {
         int directoryIndex = 0;
         currentFile = new File(path);
         File[] files = currentFile.listFiles();
+        // TODO 所有的条件循环等都应该有大括号, 哪怕是一行
         if (files != null)
             for (File f : files) {
                 FileData fileData = new FileData(f.getName(), f.getAbsolutePath());
@@ -186,12 +187,15 @@ public class MainActivity extends AppCompatActivity {
                     lists.add(fileData);
                 }
             }
+        // TODO 每showData一次new个Adapter?尽量减少对象创建,重用一下上次的Adapter
         recycleFileAdapter = new RecycleFileAdapter(this, lists, isLongClick, selects);
         recyclerView.setAdapter(recycleFileAdapter);
         recycleFileAdapter.setOnItemClickListener(new MyItemClickListener());
         recycleFileAdapter.setOnItemLongClickListener(new MyItemLongClickListener());
     }
 
+    // TODO 像这种方法内没有引用类的成员变量的,都是可以改为static的
+    // TODO 把这种方法按功能全部独立封装到其他类中
     private int getFileCount(File file) {
         int count = 0;
         if (file != null) {
@@ -271,7 +275,9 @@ public class MainActivity extends AppCompatActivity {
         return flag;
     }
 
-    private boolean deleteFile(File file) {
+    // TODO 像这种方法内没有引用类的成员变量的,都是可以改为static的
+    // TODO 把这种方法按功能全部独立封装到其他类中
+    private static boolean deleteFile(File file) {
         boolean flag = false;
         if (file.isFile() && file.exists()) {
             file.delete();
@@ -281,6 +287,8 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    // TODO 像这种方法内没有引用类的成员变量的,都是可以改为static的
+    // TODO 把这种方法按功能全部独立封装到其他类中
     private boolean deleteDirectory(File dirFile) {
         boolean flag = false;
         if (!dirFile.exists() || !dirFile.isDirectory()) {
@@ -333,6 +341,8 @@ public class MainActivity extends AppCompatActivity {
      *
      * @param path
      */
+    // TODO 像这种方法内没有引用类的成员变量的,都是可以改为static的
+    // TODO 把这种方法按功能全部独立封装到其他类中
     public void openFile(String path) {
         if (path == null)
             return;
@@ -348,9 +358,12 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         intent.setDataAndType(Uri.fromFile(new File(path)), fileType);
+        // TODO 上面说的没有引用类的成员变量,引用了公开方法的可以加个参数
         startActivity(intent);
     }
 
+    // TODO 像这种方法内没有引用类的成员变量的,都是可以改为static的
+    // TODO 把这种方法按功能全部独立封装到其他类中
     public void requestPower() {
         //判断是否已经赋予权限
         if (ContextCompat.checkSelfPermission(this,

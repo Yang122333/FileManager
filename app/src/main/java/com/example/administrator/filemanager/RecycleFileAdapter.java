@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -33,6 +34,7 @@ public class RecycleFileAdapter extends RecyclerView.Adapter<RecycleFileAdapter.
     private Map<Integer, Boolean> selects;
 
     public void setOnItemClickListener(OnRecyclerViewItemClickListener listener) {
+        // TODO 要么所有的成员变量都加this.,要么都不加(除非成员变量与参数同名,但应该避免同名)
         this.mOnItenClickListener = listener;
     }
 
@@ -71,17 +73,6 @@ public class RecycleFileAdapter extends RecyclerView.Adapter<RecycleFileAdapter.
             } else {
                 holder.mCheckBox.setChecked(false);
             }
-            holder.mCheckBox.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (holder.mCheckBox.isChecked()) {
-                        selects.put(position, false);
-
-                    } else {
-                        selects.put(position, true);
-                    }
-                }
-            });
         }
         holder.mTextView.setText(fileData.getName());
         if (file.isDirectory()){
@@ -94,6 +85,7 @@ public class RecycleFileAdapter extends RecyclerView.Adapter<RecycleFileAdapter.
         }
 
         //手动为recycleFileAdapter添加item监听器
+        // TODO 这里不能加监听创建对象,改掉
         holder.mRelativeLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -115,7 +107,7 @@ public class RecycleFileAdapter extends RecyclerView.Adapter<RecycleFileAdapter.
         return mFileDataList.size();
     }
 
-    class MyViewHolder extends RecyclerView.ViewHolder {
+    class MyViewHolder extends RecyclerView.ViewHolder implements CompoundButton.OnCheckedChangeListener{
         ImageView mImageView;
         TextView mTextView;
         TextView mFileDes;
@@ -130,8 +122,28 @@ public class RecycleFileAdapter extends RecyclerView.Adapter<RecycleFileAdapter.
             mFileDes = (TextView) itemView.findViewById(R.id.file_des);
             mRelativeLayout = (RelativeLayout) itemView.findViewById(R.id.file_relativelayout);
             mCheckBox = (CheckBox) itemView.findViewById(R.id.select_file);
+
+            // 由于监听是给View的,View不会变,变得只是条件(ViewHolder的position)
+            // 所以逻辑上也应该是只添加一次，然后根据条件执行动作
+            initListeners();
         }
 
+        private void initListeners() {
+            // 让当前类直接继承XXListener,能够避免对象的创建,之后在回调中判断是哪个View的回调就可以
+            mCheckBox.setOnCheckedChangeListener(this);
+        }
+
+        @Override
+        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            if (buttonView == mCheckBox) {
+                if (mCheckBox.isChecked()) {
+                    selects.put(getAdapterPosition(), false);
+
+                } else {
+                    selects.put(getAdapterPosition(), true);
+                }
+            }
+        }
     }
 
 
