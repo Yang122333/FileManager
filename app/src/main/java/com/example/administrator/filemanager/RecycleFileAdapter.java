@@ -1,5 +1,6 @@
 package com.example.administrator.filemanager;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
@@ -34,17 +35,15 @@ public class RecycleFileAdapter extends RecyclerView.Adapter<RecycleFileAdapter.
     private Map<Integer, Boolean> selects;
 
     public void setOnItemClickListener(OnRecyclerViewItemClickListener listener) {
-        // TODO 要么所有的成员变量都加this.,要么都不加(除非成员变量与参数同名,但应该避免同名)
-        this.mOnItenClickListener = listener;
+        mOnItenClickListener = listener;
     }
 
     public void setOnItemLongClickListener(OnRecyclerViewItemLongClickListener listener) {
-        this.mOnItemLongClickListener = listener;
+        mOnItemLongClickListener = listener;
     }
 
-    public RecycleFileAdapter(Context context, ArrayList<FileData> fileDataList,
+     RecycleFileAdapter(Context context, ArrayList<FileData> fileDataList,
                               Map<String, Boolean> isLongClick, Map<Integer, Boolean> selects) {
-
         mFileDataList = fileDataList;
         mContext = context;
         this.isLongClick = isLongClick;
@@ -54,74 +53,58 @@ public class RecycleFileAdapter extends RecyclerView.Adapter<RecycleFileAdapter.
     @NonNull
     @Override
     public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        MyViewHolder holder = new MyViewHolder(LayoutInflater.from(mContext)
+        return  new MyViewHolder(LayoutInflater.from(mContext)
                 .inflate(R.layout.fileitem, parent, false));
-        return holder;
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     public void onBindViewHolder(@NonNull final MyViewHolder holder, final int position) {
         FileData fileData = mFileDataList.get(position);
         File file = new File(fileData.getPath());
         if (isLongClick.get("isLongClick")) {
-            if (!mFileDataList.get(position).getName().equals(MainActivity.RETURN_TO_BACK) &&
-                    !mFileDataList.get(position).getName().equals(MainActivity.RETURN_TO_ROOT)) {
-                holder.mCheckBox.setVisibility(View.VISIBLE);
-            }
+            holder.mCheckBox.setVisibility(View.VISIBLE);
             if (selects.containsKey(position)) {
                 holder.mCheckBox.setChecked(selects.get(position));
             } else {
                 holder.mCheckBox.setChecked(false);
             }
+        } else {
+            holder.mCheckBox.setVisibility(View.GONE);
         }
         holder.mTextView.setText(fileData.getName());
-        if (file.isDirectory()){
+        if (file.isDirectory() ) {
             holder.mImageView.setImageResource(R.drawable.directory);
-            holder.mFileDes.setText("文件："+fileData.getFileCount()+"\t文件夹："+fileData.getDirectoryCount());
-        }
-            else if (file.isFile()) {
-            holder.mFileDes.setText("文件大小为："+fileData.getLength()+"KB");
+            if (fileData.getDirectoryCount() != -1){
+                holder.mFileDes.setText("文件：" + fileData.getFileCount() + "\t文件夹：" + fileData.getDirectoryCount());
+            }
+        } else if (file.isFile()) {
             holder.mImageView.setImageResource(R.drawable.file);
+            if (fileData.getLength() != -1){
+                holder.mFileDes.setText("文件大小为：" + fileData.getLength() + "KB");
+            }
         }
-
-        //手动为recycleFileAdapter添加item监听器
-        // TODO 这里不能加监听创建对象,改掉
-        holder.mRelativeLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mOnItenClickListener.onItemClick(v, position);
-            }
-        });
-        holder.mRelativeLayout.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                mOnItemLongClickListener.onItemLongClick(v, position);
-                return true;//消费事件
-            }
-        });
     }
-
 
     @Override
     public int getItemCount() {
         return mFileDataList.size();
     }
 
-    class MyViewHolder extends RecyclerView.ViewHolder implements CompoundButton.OnCheckedChangeListener{
+    class MyViewHolder extends RecyclerView.ViewHolder implements CompoundButton.OnCheckedChangeListener, View.OnClickListener, View.OnLongClickListener {
         ImageView mImageView;
         TextView mTextView;
         TextView mFileDes;
         CheckBox mCheckBox;
         RelativeLayout mRelativeLayout;
 
-
-        public MyViewHolder(View itemView) {
+        MyViewHolder(View itemView) {
             super(itemView);
-            mImageView = (ImageView) itemView.findViewById(R.id.file_image);
-            mTextView = (TextView) itemView.findViewById(R.id.file_name);
-            mFileDes = (TextView) itemView.findViewById(R.id.file_des);
-            mRelativeLayout = (RelativeLayout) itemView.findViewById(R.id.file_relativelayout);
-            mCheckBox = (CheckBox) itemView.findViewById(R.id.select_file);
+            mImageView =  itemView.findViewById(R.id.file_image);
+            mTextView =  itemView.findViewById(R.id.file_name);
+            mFileDes =  itemView.findViewById(R.id.file_des);
+            mRelativeLayout =  itemView.findViewById(R.id.file_relativelayout);
+            mCheckBox = itemView.findViewById(R.id.select_file);
 
             // 由于监听是给View的,View不会变,变得只是条件(ViewHolder的position)
             // 所以逻辑上也应该是只添加一次，然后根据条件执行动作
@@ -130,7 +113,10 @@ public class RecycleFileAdapter extends RecyclerView.Adapter<RecycleFileAdapter.
 
         private void initListeners() {
             // 让当前类直接继承XXListener,能够避免对象的创建,之后在回调中判断是哪个View的回调就可以
-            mCheckBox.setOnCheckedChangeListener(this);
+//            mCheckBox.setOnCheckedChangeListener(this);
+            //TODO 先取消对复选框的状态改变监听
+            mRelativeLayout.setOnClickListener(this);
+            mRelativeLayout.setOnLongClickListener(this);
         }
 
         @Override
@@ -143,6 +129,16 @@ public class RecycleFileAdapter extends RecyclerView.Adapter<RecycleFileAdapter.
                     selects.put(getAdapterPosition(), true);
                 }
             }
+        }
+        @Override
+        public void onClick(View v) {
+            mOnItenClickListener.onItemClick(v, getAdapterPosition());
+        }
+
+        @Override
+        public boolean onLongClick(View v) {
+            mOnItemLongClickListener.onItemLongClick(v, getAdapterPosition());
+            return true;
         }
     }
 

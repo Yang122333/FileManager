@@ -3,15 +3,12 @@ package com.example.administrator.filemanager;
 public class FileData {
     private String name;
     private String path;
-    private int fileCount = 0;
-    private int directoryCount = 0;
-    private long length = 0;
+    private int fileCount = -1;
+    private int directoryCount = -1;
+    private long length = -1;
+    private String time = "";
 
-
-    public FileData() {
-    }
-
-    public FileData(String name, String path) {
+     FileData(String name, String path) {
         this.name = name;
         this.path = path;
     }
@@ -55,5 +52,13 @@ public class FileData {
 
     public void setLength(long length) {
         this.length = length;
+    }
+
+    public String getTime() {
+        return time;
+    }
+
+    public void setTime(String time) {
+        this.time = time;
     }
 }

@@ -29,7 +29,7 @@
         android:layout_below="@+id/file_name"
         android:layout_toRightOf="@+id/file_image"
         android:paddingLeft="20dp"
-        android:text="dsfafasdf sfadf sdfsfafasdfs"
+        android:text="正在加载..."
         android:textSize="10dp" />
 
     <CheckBox
